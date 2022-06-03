@@ -1,0 +1,2 @@
+click
+Pillow>=9.0
