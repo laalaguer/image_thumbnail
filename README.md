@@ -25,13 +25,13 @@ Commands:
 **Shrink image, no more than 3000 x 3000 pixels**
 ```bash
 # Shrink images in /Downloads, output into /Desktop
-./process.py downscale /Downloads /Desktop -d 3000
+python3 ./process.py downscale /Downloads /Desktop -d 3000
 ```
 
 **Shrink image, no more than 2 MB**
 ```bash
 # Shrink images in /Downloads, output into /Desktop
-./process.py downsize /Downloads /Desktop -s 2
+python3 ./process.py downsize /Downloads /Desktop -s 2
 ```
 
 ## For Developers
