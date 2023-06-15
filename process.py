@@ -3,7 +3,7 @@ import click
 from pathlib import Path
 from image_thumbnail import utils, constants
 
-COMMON_SUFFIXES = ['.png', '.jpeg', '.jpg', '.bmp']
+COMMON_SUFFIXES = ['.png', '.jpeg', '.jpg', '.bmp', '.webp']
 
 @click.group()
 def cli():
@@ -14,19 +14,20 @@ def cli():
 @click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
 @click.option('-s', '--size', type=float, required=False, default=constants.StorageSizes.JPEG_GOOD, prompt="Process files till less than () MB?", help='Process files till less than () MB?')
 @click.option('-q', '--quality', type=int, required=False, default=constants.ImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
-def downsize(src, dst, size, quality):
+@click.option('-f', '--force', is_flag=True, show_default=True, default=False, help="Enfore every image converted to JPG")
+def downsize(src, dst, size, quality, force):
     '''
         Shrink images till a max size in MB.
 
         Read from SRC folder, store in DST folder. (non-images are simply copied)
     '''
-    click.echo(f'src: {src}, dst: {dst}, size: {size} MB, quality: {quality}')
+    click.echo(f'src: {src}, dst: {dst}, size: {size} MB, quality: {quality}, force jpg: {force}')
     for message in utils.scan_multi(
         Path(src),
         Path(dst),
         COMMON_SUFFIXES,
         'down_size',
-        {'max_size_mb': float(size), 'quality': quality}
+        {'max_size_mb': float(size), 'quality': quality, 'force_jpg': force}
     ):
         print(f'\r{message}', end='')
     print()

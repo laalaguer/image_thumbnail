@@ -43,22 +43,38 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
         ----------
         config: {'max_size_mb':float, 'quality':int}
     '''
-    # Output file final path
-    output_pic_file_name = Path(output_stem).with_suffix('.jpg')
-    output_pic_path = output_folder.joinpath(output_pic_file_name)
-
     # Set up configurations, if not configured then use "middle" range options
     quality = config.get('quality', ImageQuality.JPEG_GOOD)
     max_size_mb = config.get('max_size_mb', StorageSizes.JPEG_GOOD)
+    force_jpg = config.get('force_jpg', False)
     
+    flag_file_is_jpg = original_pic.suffix.lower() == '.jpg' or original_pic.suffix.lower() == '.jpeg'
+    flag_file_size_exceeded = original_pic.stat().st_size > max_size_mb * 1024 * 1024
+
     try:
         im = PILImage.open(original_pic)
         if im.mode not in ("L", "RGB"):
             im = im.convert("RGB")
 
-        if original_pic.stat().st_size < max_size_mb * 1024 * 1024:
+        flag_should_transform = False
+
+        if flag_file_size_exceeded:
+            flag_should_transform = True
+        if not flag_file_is_jpg:
+            if force_jpg:
+                flag_should_transform = True
+
+        
+        if not flag_should_transform:
+            # Output file final path
+            output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
+            output_pic_path = output_folder.joinpath(output_pic_file_name)
             just_copy_file(original_pic, output_pic_path)
         else:
+            # Output file final path
+            output_pic_file_name = Path(output_stem).with_suffix('.jpg')
+            output_pic_path = output_folder.joinpath(output_pic_file_name)
+
             longer_side = max([im.width, im.height])
             
             # To achieve fast tryouts, do 1/2 dimension for once first
