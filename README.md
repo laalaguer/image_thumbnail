@@ -13,10 +13,13 @@ A Python tool to shrink images to your desire in a multi-process manner.
 |iPhone 14 Pro| 2556 | 1179 |
 |Galaxy S23 | 2340 | 1080 | 
 
-Stock image resolution at **< 1280** is inadequate for morden screens, and **> 4096** can be considered an overkill.
+Stock image resolution at 
 
-Common size is around **2500**.
+**< 1280** is inadequate for modern screens. (cannot cover the area)
 
+**> 4096** is considered satisfaction (cover the whole 4K TV).
+
+For pics with greater details (zoom allowed), then keep 3x the length/width of the actual screen.
 
 ## Install
 ```
