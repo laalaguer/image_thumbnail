@@ -53,6 +53,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
 
     try:
         im = PILImage.open(original_pic)
+        exif = im.info.get('exif', b'')
         if im.mode not in ("L", "RGB"):
             im = im.convert("RGB")
 
@@ -82,7 +83,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
             im_copy = im.copy()
             im_copy.thumbnail((semi_side, semi_side), resample=PIL.Image.Resampling.LANCZOS)
             buffer = io.BytesIO()
-            im_copy.save(buffer, "JPEG", quality=quality)
+            im_copy.save(buffer, "JPEG", quality=quality, exif=exif)
             
             # If semi size is still too big
             if len(buffer.getvalue()) > max_size_mb * 1024 * 1024:
@@ -109,7 +110,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
                 if len(buffer.getvalue()) > max_size_mb * 1024 * 1024:
                     continue
                 else:
-                    im_copy.save(output_pic_path, "JPEG", quality=quality)
+                    im_copy.save(output_pic_path, "JPEG", quality=quality, exif=exif)
                     break
 
     except Exception as e:
@@ -138,7 +139,8 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
             im = im.convert("RGB")
 
         im.thumbnail((max_dimension, max_dimension), resample=PIL.Image.Resampling.LANCZOS)
-        im.save(output_pic_path, "JPEG", quality=quality) # 95% quality can save 1/2 space
+        exif = im.info.get('exif', b'')
+        im.save(output_pic_path, "JPEG", quality=quality, exif=exif) # 95% quality can save 1/2 space
     except Exception as e:
         print(e)
 
