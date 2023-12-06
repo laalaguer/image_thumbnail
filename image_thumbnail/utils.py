@@ -111,6 +111,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
                     continue
                 else:
                     im_copy.save(output_pic_path, "JPEG", quality=quality, exif=exif)
+                    print("save:", output_pic_path)
                     break
 
     except Exception as e:
@@ -141,6 +142,7 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
         im.thumbnail((max_dimension, max_dimension), resample=PIL.Image.Resampling.LANCZOS)
         exif = im.info.get('exif', b'')
         im.save(output_pic_path, "JPEG", quality=quality, exif=exif) # 95% quality can save 1/2 space
+        print("save:", output_pic_path)
     except Exception as e:
         print(e)
 
