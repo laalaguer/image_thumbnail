@@ -5,11 +5,17 @@ import multiprocessing
 from multiprocessing import Pool
 from typing import List, Callable, Union
 
-from PIL import Image as PILImage
 import PIL
+from PIL import (
+    Image as PILImage,
+    ExifTags
+)
+
+from exif import (
+    Image as EXIFImage
+)
 
 from .constants import (
-    Resolutions,
     StorageSizes,
     ImageQuality
 )
@@ -28,6 +34,62 @@ def just_copy_file(src: Path, dst: Path):
     shutil.copyfile(src, dst)
 
 
+def _find_tag_number_by_name(name: str) -> Union[int, None]:
+    '''Pillow internal: Find a EXIF tag number, given a string name reference
+
+    Args:
+        name (str): EXIF tag name, eg. image_description or ImageDescription
+
+    Returns:
+        Union[int, None]: The EXIF number or None if not found.
+    '''
+    search_name = name.replace('_', '').lower()
+    for int_key in ExifTags.TAGS:
+        if ExifTags.TAGS[int_key].lower() == search_name:
+            return int_key
+    return None
+
+
+def _strip_exif_tags(my_exif: dict, tags: List[str]):
+    '''Pillow internal: Strip EXIF tag by name, return modified EXIF dict
+
+    Args:
+        exif_info (dict): _description_
+        tags (List[str]): _description_
+    '''
+    int_keys = [_find_tag_number_by_name(x) for x in tags]
+    int_keys = [x for x in int_keys if x != None] # filter out None values
+
+    new_exif = my_exif
+
+    for key in new_exif:
+        if key in int_keys:
+            del new_exif[key]
+    
+    return new_exif
+
+
+def _strip_exif_tags_2(src: Path, dst: Path, tags: List[str]):
+    '''Strip EXIF tags from a image file, without re-compressing the original file.
+
+    Args:
+        src (Path): source image
+        dst (Path): output image
+        tags (str]): eg: image_description, xp_comment.
+    '''
+    my_image = None
+    with open(src, 'rb') as in_file:
+        my_image = EXIFImage(in_file)
+
+    if my_image.has_exif:
+        for k in my_image.list_all():
+            if k in tags:
+                del my_image[k]
+
+    with open(dst, 'wb') as out_file:
+        out_file.write(my_image.get_file())
+
+
 def compute_relative_path(longer: Path, shorter: Path) -> Union[Path, None]:
     ''' 
         Compute the chunk of relative path between shorter one and longer one.
@@ -41,19 +103,22 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
 
         Parameters
         ----------
-        config: {'max_size_mb':float, 'quality':int}
+        config: {'max_size_mb':float, 'quality':int, 'force_jpg':bool, 'tags':List[str]}
     '''
     # Set up configurations, if not configured then use "middle" range options
     quality = config.get('quality', ImageQuality.JPEG_GOOD)
     max_size_mb = config.get('max_size_mb', StorageSizes.JPEG_GOOD)
     force_jpg = config.get('force_jpg', False)
+    tags = config.get('tags', [])
     
     flag_file_is_jpg = original_pic.suffix.lower() == '.jpg' or original_pic.suffix.lower() == '.jpeg'
     flag_file_size_exceeded = original_pic.stat().st_size > max_size_mb * 1024 * 1024
 
     try:
         im = PILImage.open(original_pic)
-        exif = im.info.get('exif', b'')
+        my_exif = im.getexif()
+        my_exif = _strip_exif_tags(my_exif, tags)
+
         if im.mode not in ("L", "RGB"):
             im = im.convert("RGB")
 
@@ -83,7 +148,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
             im_copy = im.copy()
             im_copy.thumbnail((semi_side, semi_side), resample=PIL.Image.Resampling.LANCZOS)
             buffer = io.BytesIO()
-            im_copy.save(buffer, "JPEG", quality=quality, exif=exif)
+            im_copy.save(buffer, "JPEG", quality=quality, exif=my_exif)
             
             # If semi size is still too big
             if len(buffer.getvalue()) > max_size_mb * 1024 * 1024:
@@ -110,7 +175,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
                 if len(buffer.getvalue()) > max_size_mb * 1024 * 1024:
                     continue
                 else:
-                    im_copy.save(output_pic_path, "JPEG", quality=quality, exif=exif)
+                    im_copy.save(output_pic_path, "JPEG", quality=quality, exif=my_exif)
                     print("save:", output_pic_path)
                     break
 
@@ -124,7 +189,7 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
 
         Parameters
         ----------
-        config: {'max_dimension':int, 'quality':int}
+        config: {'max_dimension':int, 'quality':int, 'tags':List[str]}
     '''
     # output file final path
     output_pic_file_name = Path(output_stem).with_suffix('.jpg')
@@ -133,6 +198,7 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
     # Set up configurations, if not configured then use "middle" range options
     max_dimension = config.get('max_dimension', 0)
     quality = config.get('quality', ImageQuality.JPEG_GOOD) # 95% quality can save 1/2 space
+    tags = config.get('tags', [])
 
     try:
         im = PILImage.open(original_pic)
@@ -143,9 +209,32 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
             max_dimension = max(im.size)
 
         im.thumbnail((max_dimension, max_dimension), resample=PIL.Image.Resampling.LANCZOS)
-        exif = im.info.get('exif', b'')
-        im.save(output_pic_path, "JPEG", quality=quality, exif=exif)
+        my_exif = im.getexif()
+        my_exif = _strip_exif_tags(my_exif, tags)
+
+        im.save(output_pic_path, "JPEG", quality=quality, exif=my_exif)
         print("save:", output_pic_path)
+    except Exception as e:
+        print(e)
+
+
+def strip_exif(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
+    '''Strip EXIF without re-compressing.
+
+    Args:
+        original_pic (Path): original pic path
+        output_stem (str): output pic stem
+        output_folder (Path): output folder
+        config (dict): {'tags': [str]}
+    '''
+    # output file final path
+    output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
+    output_pic_path = output_folder.joinpath(output_pic_file_name)
+
+    tags = config.get('tags', [])
+
+    try:
+        _strip_exif_tags_2(original_pic, output_pic_path, tags)
     except Exception as e:
         print(e)
 
@@ -153,7 +242,8 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
 class ImageHelper:
     registry = {
         'down_size': down_size,
-        'down_scale': down_scale
+        'down_scale': down_scale,
+        'strip_exif': strip_exif
     }
 
     @classmethod

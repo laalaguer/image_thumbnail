@@ -15,19 +15,26 @@ def cli():
 @click.option('-s', '--size', type=float, required=False, default=constants.StorageSizes.JPEG_GOOD, prompt="Process files till less than () MB?", help='Process files till less than () MB?')
 @click.option('-q', '--quality', type=int, required=False, default=constants.ImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
 @click.option('-f', '--force', is_flag=True, show_default=True, default=False, help="Enfore every image converted to JPG")
-def downsize(src, dst, size, quality, force):
+@click.option('-t', '--tag', type=str, required=False, default=[], multiple=True, prompt="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.", help="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.")
+def down_size(src, dst, size, quality, force, tag):
     '''
         Shrink images till a max size in MB.
 
         Read from SRC folder, store in DST folder. (non-images are simply copied)
     '''
-    click.echo(f'src: {src}, dst: {dst}, size: {size} MB, quality: {quality}, force jpg: {force}')
+    click.echo(f'src: {src}, dst: {dst}, size: {size} MB, quality: {quality}, force jpg: {force}, tags: {tag}')
+    config = {
+        'max_size_mb': float(size),
+        'quality': quality,
+        'force_jpg': force,
+        'tags': [x.lower() for x in tag]
+    }
     for message in utils.scan_multi(
         Path(src),
         Path(dst),
         COMMON_SUFFIXES,
         'down_size',
-        {'max_size_mb': float(size), 'quality': quality, 'force_jpg': force}
+        config
     ):
         print(f'\r{message}', end='')
     print()
@@ -37,26 +44,55 @@ def downsize(src, dst, size, quality, force):
 @click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
 @click.option('-d', '--dimension', type=int, required=False, default=0, prompt="Max dimension (eg. width, height), if 0 then size unchanged", help='Max dimension (eg. width, height), if 0 then size unchanged')
 @click.option('-q', '--quality', type=int, required=False, default=constants.ImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
-def downscale(src, dst, dimension, quality):
+@click.option('-t', '--tag', type=str, required=False, default=[], multiple=True, prompt="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.", help="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.")
+def down_scale(src, dst, dimension, quality, tag):
     '''
         Shrink images till a max dimension in pixels (width, height).
 
         Read from SRC folder, store in DST folder. (non-images are simply copied)
     '''
     click.echo(f'src: {src}, dst: {dst}, dimension: {dimension}x{dimension} pixels, quality: {quality}')
+    config = {
+        'max_dimension': int(dimension),
+        'quality': quality,
+        'tags': [x.lower() for x in tag]
+    }
     for message in utils.scan_multi(
         Path(src),
         Path(dst),
         COMMON_SUFFIXES,
         'down_scale',
-        {'max_dimension': int(dimension), 'quality': quality}
+        config
     ):
         print(f'\r{message}', end='')
     print()
 
 
-cli.add_command(downsize)
-cli.add_command(downscale)
+@click.command()
+@click.argument('src', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True), required=True)
+@click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
+@click.option('-t', '--tag', type=str, required=True, default=[], multiple=True, prompt="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.", help="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.")
+def strip_exif(src, dst, tag):
+    ''' Strip EXIF tags off images.
+    '''
+    click.echo(f'src: {src}, dst: {dst}, tag: {tag}')
+    config = {
+        'tags': [x.lower() for x in tag]
+    }
+    for message in utils.scan_multi(
+        Path(src),
+        Path(dst),
+        COMMON_SUFFIXES,
+        'strip_exif',
+        config
+    ):
+        print(f'\r{message}', end='')
+    print()
+
+
+cli.add_command(down_size)
+cli.add_command(down_scale)
+cli.add_command(strip_exif)
 
 if __name__ == '__main__':
     cli()

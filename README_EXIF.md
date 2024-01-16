@@ -1,6 +1,75 @@
-Pillow extracted EXIF info and values
+`exif` extractedd EXIF info and values
 
 ```python
+from exif import Image
+with open('/path/to/my.jpg', 'rb') as image_file:
+    my_image = Image(image_file)
+    print(my_image.has_exif)
+    my_image.list_all()
+
+[
+    "_exif_ifd_pointer",
+    "aperture_value",
+    "artist",
+    "brightness_value",
+    "color_space",
+    "compression",
+    "contrast",
+    "custom_rendered",
+    "datetime",
+    "datetime_digitized",
+    "datetime_original",
+    "digital_zoom_ratio",
+    "exif_version",
+    "exposure_bias_value",
+    "exposure_mode",
+    "exposure_program",
+    "exposure_time",
+    "f_number",
+    "file_source",
+    "flash",
+    "focal_length",
+    "focal_length_in_35mm_film",
+    "focal_plane_resolution_unit",
+    "focal_plane_x_resolution",
+    "focal_plane_y_resolution",
+    "image_description",
+    "jpeg_interchange_format",
+    "jpeg_interchange_format_length",
+    "light_source",
+    "make",
+    "max_aperture_value",
+    "metering_mode",
+    "model",
+    "offset_time",
+    "photographic_sensitivity",
+    "resolution_unit",
+    "saturation",
+    "scene_capture_type",
+    "scene_type",
+    "sharpness",
+    "shutter_speed_value",
+    "software",
+    "white_balance",
+    "x_resolution",
+    "xp_author",
+    "xp_comment",
+    "xp_keywords",
+    "xp_subject",
+    "xp_title",
+    "y_resolution",
+]
+
+```
+
+
+`Pillow` extracted EXIF info and values
+
+```python
+from PIL import ExifTags
+
+> ExifTags.TAGS
+
 {
     1: "InteropIndex",
     11: "ProcessingSoftware",
