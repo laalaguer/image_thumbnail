@@ -35,7 +35,7 @@ def downsize(src, dst, size, quality, force):
 @click.command()
 @click.argument('src', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True), required=True)
 @click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
-@click.option('-d', '--dimension', type=int, required=False, default=constants.Resolutions.JPEG_GOOD, prompt="Max dimension (eg. width, height)?", help='Max dimension (eg. width, height)?')
+@click.option('-d', '--dimension', type=int, required=False, default=0, prompt="Max dimension (eg. width, height), if 0 then size unchanged", help='Max dimension (eg. width, height), if 0 then size unchanged')
 @click.option('-q', '--quality', type=int, required=False, default=constants.ImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
 def downscale(src, dst, dimension, quality):
     '''

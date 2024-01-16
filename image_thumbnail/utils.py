@@ -131,17 +131,20 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
     # Set up configurations, if not configured then use "middle" range options
-    max_dimension = config.get('max_dimension', Resolutions.JPEG_GOOD)
-    quality = config.get('quality', ImageQuality.JPEG_GOOD)
+    max_dimension = config.get('max_dimension', 0)
+    quality = config.get('quality', ImageQuality.JPEG_GOOD) # 95% quality can save 1/2 space
 
     try:
         im = PILImage.open(original_pic)
         if im.mode not in ("L", "RGB"):
             im = im.convert("RGB")
 
+        if max_dimension == 0:
+            max_dimension = max(im.size)
+
         im.thumbnail((max_dimension, max_dimension), resample=PIL.Image.Resampling.LANCZOS)
         exif = im.info.get('exif', b'')
-        im.save(output_pic_path, "JPEG", quality=quality, exif=exif) # 95% quality can save 1/2 space
+        im.save(output_pic_path, "JPEG", quality=quality, exif=exif)
         print("save:", output_pic_path)
     except Exception as e:
         print(e)
