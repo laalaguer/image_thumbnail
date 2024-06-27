@@ -90,9 +90,49 @@ def strip_exif(src, dst, tag):
     print()
 
 
+@click.command()
+@click.argument('src', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True), required=True)
+@click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
+@click.option('-t', '--tag', type=str, required=True, default=[], multiple=True, prompt="Exif Tags to be writte. Eg. -t artist -t john", help="Exif Tags to be writte. Eg. -t artist -t john")
+def set_exif(src, dst, tag):
+    ''' Write EXIF tags of images.
+    '''
+    click.echo(f'src: {src}, dst: {dst}, tag: {tag}')
+    if len(tag) % 2 != 0:
+        click.echo(f'-t option must be used in even manner')
+        return
+
+    if len(tag) == 0:
+        click.echo(f'-t option must be specified')
+        return
+
+    keys = []
+    
+    for idx in range(0, len(tag), 2):
+        keys.append(tag[idx])
+    
+    values = []
+    for idx in range(1, len(tag), 2):
+        values.append(tag[idx])
+    
+    key_value = zip(keys, values)
+    config = {x[0]:x[1] for x in key_value}
+
+    for message in utils.scan_multi(
+        Path(src),
+        Path(dst),
+        COMMON_SUFFIXES,
+        'set_exif',
+        config
+    ):
+        print(f'\r{message}', end='')
+    print()
+
+
 cli.add_command(down_size)
 cli.add_command(down_scale)
 cli.add_command(strip_exif)
+cli.add_command(set_exif)
 
 if __name__ == '__main__':
     cli()

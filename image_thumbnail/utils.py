@@ -8,6 +8,7 @@ from typing import List, Callable, Union
 import PIL
 from PIL import (
     Image as PILImage,
+    ImageFile as PILImageFile,
     ExifTags
 )
 
@@ -19,6 +20,9 @@ from .constants import (
     StorageSizes,
     ImageQuality
 )
+
+# Load partial images without error
+PILImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def max_process_count(MIN:int=2):
     ''' Compute max processes allowed on this computer '''
@@ -239,11 +243,109 @@ def strip_exif(original_pic: Path, output_stem: str, output_folder: Path, config
         print(e)
 
 
+def _remove_exif(src: Path):
+    ''' Total removal of EXIF from image '''
+    image = PILImage.open(src)
+    data = list(image.getdata())
+    image2 = PILImage.new(image.mode, image.size)
+    image2.putdata(data)
+    image2.save(src)
+
+
+def _open_as_exif_image(src: Path):
+    ''' Open as EXIF image.
+        raise Exception if cannot read from file.
+    '''
+    my_image = None
+    with open(src, 'rb') as in_file:
+        my_image = EXIFImage(in_file)
+        return my_image
+
+
+def open_as_exif_image(src: Path):
+    ''' Open as EXIF image, will try to fix corrupted EXIF for once. 
+        If can't fix, then raise exception.
+    '''
+    my_image = None
+    try:
+        my_image = _open_as_exif_image(src)
+    except Exception as e:
+        print(f'Error open as EXIF: {src}, retry...')
+        # Remove the corrupted EXIF info
+        _remove_exif(src)
+        # Try re-open, still error then abort with exception
+        my_image = _open_as_exif_image
+
+    return my_image
+
+
+def _set_exifs(my_image: EXIFImage, config: dict) -> Union[EXIFImage, None]:
+    try:
+        for key in config:
+            my_image[key] = config[key]
+        return my_image
+    except Exception as e:
+        print(f'Error set key: {key}')
+        return None
+
+
+def set_exifs(src: Path, my_image: EXIFImage, config: dict) -> EXIFImage:
+    ''' Set exif of image, if error occurs try to fix it '''
+    max_try = 10
+    new_image = None
+    while max_try > 0:
+        max_try -= 1
+        new_image = _set_exifs(my_image, config)
+        if new_image:
+            break
+        else:
+            print(f'Error on file: {src}, retry...')
+            _remove_exif(src)
+            my_image = open_as_exif_image(src)
+    
+    if new_image is None:
+        raise Exception('Cannot set EXIF after max_try exhausted')
+    else:
+        return new_image
+
+
+def _set_exif_tags_2(src: Path, dst: Path, config: dict):
+    '''Set EXIF tags to its values
+
+    Args:
+        src (Path): original pic
+        dst (Path): destination pic
+        config (dict): {'exif_key', 'value' }
+    '''
+    my_image = open_as_exif_image(src)    
+    my_image = set_exifs(src, my_image, config)
+    try:
+        with open(dst, 'wb') as out_file:
+            out_file.write(my_image.get_file())
+    except Exception as e:
+        print('Error save:', dst)
+        print(e)
+
+
+def set_exif(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
+    ''' config: {'exif_key': 'value' } '''
+    output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
+    output_pic_path = output_folder.joinpath(output_pic_file_name)
+
+    try:
+        _set_exif_tags_2(original_pic, output_pic_path, config)
+    except Exception as e:
+        print(f'set_exif error: {original_pic}')
+        print(e)
+        raise (e)
+
+
 class ImageHelper:
     registry = {
         'down_size': down_size,
         'down_scale': down_scale,
-        'strip_exif': strip_exif
+        'strip_exif': strip_exif,
+        'set_exif': set_exif
     }
 
     @classmethod
