@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 import multiprocessing
 from multiprocessing import Pool
-from typing import List, Callable, Union
+from typing import List, Callable, Union, Tuple
 
 import PIL
 from PIL import (
@@ -23,6 +23,125 @@ from .constants import (
 
 # Load partial images without error
 PILImageFile.LOAD_TRUNCATED_IMAGES = True
+
+def save_jpg(img:PILImage.Image, output_pic_path:str, quality=85):
+    ''' Save an image with to jpg '''
+    img.save(output_pic_path, "JPEG", quality=quality)
+
+def open_img(pic_path:str):
+    ''' Open an image with correct orientaion '''
+    im = PILImage.open(pic_path)
+    try:
+        exif = im.getexif()
+        if exif is not None:
+            # Iterate through the EXIF data
+            for tag, value in exif.items():
+                if ExifTags.TAGS.get(tag) == 'Orientation':
+                    orientation = value
+                    break
+            else:
+                orientation = 1  # Default orientation
+        else:
+            orientation = 1  # Default orientation
+    except Exception as e:
+        print(f"Error reading EXIF data: {e}")
+        orientation = 1  # Default orientation if there's an error
+
+    # Apply the orientation
+    if orientation == 1:
+        pass  # No rotation needed
+    elif orientation == 3:
+        im = im.rotate(180, expand=True)
+    elif orientation == 6:
+        im = im.rotate(270, expand=True)
+    elif orientation == 8:
+        im = im.rotate(90, expand=True)
+
+    return im
+             
+def resize_to_fit(img: PILImage.Image, x, y):
+    ''' Size down the img to width x and height y
+        Return type Image
+    '''
+    # Open the original image
+    original_image = img
+    a, b = original_image.size  # Original dimensions
+
+    # Calculate the aspect ratio
+    aspect_ratio = a / b
+    target_aspect_ratio = x / y
+
+    if aspect_ratio > target_aspect_ratio:
+        # Original image is wider than the target aspect ratio
+        new_height = y
+        new_width = int(y * aspect_ratio)
+    else:
+        # Original image is taller than the target aspect ratio
+        new_width = x
+        new_height = int(x / aspect_ratio)
+
+    # Resize the original image
+    resized_image = original_image.resize((new_width, new_height), PILImage.ANTIALIAS)
+
+    # Create a new blank image with the target dimensions
+    new_image = PILImage.new("RGB", (x, y), (255, 255, 255))  # White background
+
+    # Calculate the position to paste the resized image
+    paste_x = (x - new_width) // 2
+    paste_y = (y - new_height) // 2
+
+    # Paste the resized image onto the blank image
+    new_image.paste(resized_image, (paste_x, paste_y))
+
+    return new_image
+
+
+def min_size(imgs: List[PILImage.Image]) -> Tuple[int, int]:
+    ''' Return the min [width, height] of a list of images '''
+    sizes = [x.size for x in imgs]
+    widths = [x[0] for x in sizes]
+    heights = [x[1] for x in sizes]
+    
+    min_width = min(widths)
+    min_height = min(heights)
+
+    return (min_width, min_height)
+
+
+def concat_imgs(imgs: List[PILImage.Image], horizontal:bool) -> PILImage.Image:
+    ''' Concat images into a horizontal or vertical way
+
+    Args:
+        imgs (list): a list of image files
+        horizontal (bool): true then make it horizontal, false then vertical
+
+    Returns:
+        PIL.Image.Image
+    '''
+    min_width, min_height = min_size(imgs)
+    new_imgs = [resize_to_fit(x, min_width, min_height) for x in imgs]
+
+    if horizontal:
+        total_width = min_width * len(new_imgs)
+        # Create a new canvas
+        concatenated_image = PILImage.new('RGB', (total_width, min_height))
+        # Paste images one by one
+        current_x = 0
+        for image in new_imgs:
+            concatenated_image.paste(image, (current_x, 0))
+            current_x += min_width
+    else:
+        total_height = min_height * len(new_imgs)
+        # Create a new canvas
+        concatenated_image = PILImage.new('RGB', (min_width, total_height))
+        # Paste images one by one
+        current_y = 0
+        for image in new_imgs:
+            concatenated_image.paste(image, (0, current_y))
+            current_y += min_height
+    
+    return concatenated_image
+
 
 def max_process_count(MIN:int=2):
     ''' Compute max processes allowed on this computer '''
