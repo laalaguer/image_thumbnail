@@ -1,9 +1,10 @@
 ''' Interface to image process '''
 import click
 from pathlib import Path
-from image_thumbnail import utils, constants
-
-COMMON_SUFFIXES = ['.png', '.jpeg', '.jpg', '.bmp', '.webp']
+from image_thumbnail import (
+    utils,
+    constants
+)
 
 @click.group()
 def cli():
@@ -32,7 +33,7 @@ def down_size(src, dst, size, quality, force, tag):
     for message in utils.scan_multi(
         Path(src),
         Path(dst),
-        COMMON_SUFFIXES,
+        constants.IMAGE_SUFFIX,
         'down_size',
         config
     ):
@@ -60,8 +61,30 @@ def down_scale(src, dst, dimension, quality, tag):
     for message in utils.scan_multi(
         Path(src),
         Path(dst),
-        COMMON_SUFFIXES,
+        constants.IMAGE_SUFFIX,
         'down_scale',
+        config
+    ):
+        print(f'\r{message}', end='')
+    print()
+
+
+@click.command()
+@click.argument('src', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True), required=True)
+@click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
+def remove_black_bar(src, dst):
+    '''
+        Remove the black bar from images.
+
+        Read from SRC folder, store in DST folder. (non-images are simply copied)
+    '''
+    click.echo(f'src: {src}, dst: {dst}')
+    config = {}
+    for message in utils.scan_multi(
+        Path(src),
+        Path(dst),
+        constants.IMAGE_SUFFIX,
+        'remove_black_bar',
         config
     ):
         print(f'\r{message}', end='')
@@ -82,7 +105,7 @@ def strip_exif(src, dst, tag):
     for message in utils.scan_multi(
         Path(src),
         Path(dst),
-        COMMON_SUFFIXES,
+        constants.IMAGE_SUFFIX,
         'strip_exif',
         config
     ):
@@ -121,7 +144,7 @@ def set_exif(src, dst, tag):
     for message in utils.scan_multi(
         Path(src),
         Path(dst),
-        COMMON_SUFFIXES,
+        constants.IMAGE_SUFFIX,
         'set_exif',
         config
     ):
@@ -131,6 +154,7 @@ def set_exif(src, dst, tag):
 
 cli.add_command(down_size)
 cli.add_command(down_scale)
+cli.add_command(remove_black_bar)
 cli.add_command(strip_exif)
 cli.add_command(set_exif)
 

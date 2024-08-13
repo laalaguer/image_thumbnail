@@ -24,9 +24,17 @@ from .constants import (
 # Load partial images without error
 PILImageFile.LOAD_TRUNCATED_IMAGES = True
 
+def silent_remove(path: Union[str, Path]):
+    ''' Silently remove a file on the os '''
+    path = Path(path)
+    if path.exists():
+        path.unlink()
+
+
 def save_jpg(img:PILImage.Image, output_pic_path:str, quality=85):
     ''' Save an image with to jpg '''
     img.save(output_pic_path, "JPEG", quality=quality)
+
 
 def open_img(pic_path:str):
     ''' Open an image with correct orientaion '''
@@ -58,7 +66,8 @@ def open_img(pic_path:str):
         im = im.rotate(90, expand=True)
 
     return im
-             
+
+      
 def resize_to_fit(img: PILImage.Image, x, y):
     ''' Size down the img to width x and height y
         Return type Image
@@ -341,6 +350,34 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
         print(e)
 
 
+def remove_black_bar(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
+    # output file final path
+    output_pic_file_name = Path(output_stem).with_suffix('.jpg')
+    output_pic_path = output_folder.joinpath(output_pic_file_name)
+
+    # Set up configurations, if not configured then use "middle" range options
+    quality = ImageQuality.JPEG_GOOD # 95% quality can save 1/2 space
+
+    try:
+        im = open_img(original_pic)
+        if im.mode not in ("L", "RGB"):
+            im = im.convert("RGB")
+
+        grayscale_image = im.convert("L")
+    
+        # Find the bounding box of non-black areas
+        bbox = grayscale_image.getbbox()
+
+        # Crop the original image
+        cropped_image = im.crop(bbox)
+
+        # Save the cropped image
+        cropped_image.save(output_pic_path, "JPEG", quality=quality)
+        print("save:", output_pic_path)
+    except Exception as e:
+        print(e)
+
+
 def strip_exif(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
     '''Strip EXIF without re-compressing.
 
@@ -463,6 +500,7 @@ class ImageHelper:
     registry = {
         'down_size': down_size,
         'down_scale': down_scale,
+        'remove_black_bar': remove_black_bar,
         'strip_exif': strip_exif,
         'set_exif': set_exif
     }

@@ -52,3 +52,19 @@ class ImageQuality:
     JPEG_GOOD       = 90
     JPEG_OK         = 85
     JPEG_LIGHT      = 80
+
+
+IMAGE_SUFFIX = [
+    '.jpeg',
+    '.jpg',
+    '.png',
+    '.gif',
+    '.webp',
+    '.tiff',
+    '.psd',
+    '.raw',
+    '.bmp',
+    '.heif',
+    '.heic',
+    '.svg'
+]

@@ -1,4 +1,7 @@
-'''' Concat images into one image '''
+''''
+    Concat images into one image.
+    Manual mode, user shall select images to concat.
+'''
 from image_thumbnail import utils
 
 def get_user_inputs(hint='set a hint: '):
