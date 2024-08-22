@@ -18,8 +18,18 @@ from exif import (
 
 from .constants import (
     StorageSizes,
-    ImageQuality
+    ImageQuality,
+    IMAGE_SUFFIX
 )
+
+def is_img(file_path: str):
+    ''' If is supported image '''
+    supported = IMAGE_SUFFIX
+    for each in supported:
+        if file_path.lower().endswith(each.lower()):
+            return True
+    
+    return False
 
 # Load partial images without error
 PILImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -90,7 +100,7 @@ def resize_to_fit(img: PILImage.Image, x, y):
         new_height = int(x / aspect_ratio)
 
     # Resize the original image
-    resized_image = original_image.resize((new_width, new_height), PILImage.ANTIALIAS)
+    resized_image = original_image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
 
     # Create a new blank image with the target dimensions
     new_image = PILImage.new("RGB", (x, y), (255, 255, 255))  # White background

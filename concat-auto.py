@@ -3,20 +3,7 @@
 '''
 
 import os
-from image_thumbnail import (
-    utils,
-    constants
-)
-
-
-def is_img(file_path: str):
-    supported = constants.IMAGE_SUFFIX
-    for each in supported:
-        if file_path.lower().endswith(each.lower()):
-            return True
-    
-    return False
-
+from image_thumbnail import utils
 
 def process_files_in_folder(folder_path, direction:bool, remove_after:bool):
     ''' Concat ALL images under one folder.
@@ -26,7 +13,7 @@ def process_files_in_folder(folder_path, direction:bool, remove_after:bool):
     '''
     files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
     full_paths = [os.path.join(folder_path, f) for f in files]
-    imgs = [file for file in full_paths if is_img(file)]
+    imgs = [file for file in full_paths if utils.is_img(file)]
 
     if len(imgs) < 2:
         return
