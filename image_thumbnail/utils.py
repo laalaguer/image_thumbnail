@@ -1,4 +1,5 @@
 import io
+import os
 import shutil
 from pathlib import Path
 import multiprocessing
@@ -46,13 +47,14 @@ def _disallow_multi_dot(filename_path: Union[str, Path]):
         raise Exception
     '''
     _value = str(filename_path)
+    file_name = os.path.basename(_value)
     counter = 0
-    for item in _value:
+    for item in file_name:
         if item == ".":
             counter += 1
     
     if counter > 1:
-        raise Exception(f"Contain more than 1 dot in file path {_value}")
+        raise Exception(f"Contain more than 1 dot in base file name {_value}")
 
 def save_jpg(img:PILImage.Image, output_pic_path:str, quality=85):
     ''' Save an image with to jpg '''
