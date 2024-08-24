@@ -40,6 +40,19 @@ def silent_remove(path: Union[str, Path]):
     if path.exists():
         path.unlink()
 
+def _disallow_multi_dot(filename_path: Union[str, Path]):
+    '''
+        If filepath contains more than 1 dot (the suffix dot)
+        raise Exception
+    '''
+    _value = str(filename_path)
+    counter = 0
+    for item in _value:
+        if item == ".":
+            counter += 1
+    
+    if counter > 1:
+        raise Exception(f"Contain more than 1 dot in file path {_value}")
 
 def save_jpg(img:PILImage.Image, output_pic_path:str, quality=85):
     ''' Save an image with to jpg '''
@@ -247,6 +260,8 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
         ----------
         config: {'max_size_mb':float, 'quality':int, 'force_jpg':bool, 'tags':List[str]}
     '''
+    _disallow_multi_dot(original_pic)
+
     # Set up configurations, if not configured then use "middle" range options
     quality = config.get('quality', ImageQuality.JPEG_GOOD)
     max_size_mb = config.get('max_size_mb', StorageSizes.JPEG_GOOD)
@@ -333,6 +348,7 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
         ----------
         config: {'max_dimension':int, 'quality':int, 'tags':List[str]}
     '''
+    _disallow_multi_dot(original_pic)
     # output file final path
     output_pic_file_name = Path(output_stem).with_suffix('.jpg')
     output_pic_path = output_folder.joinpath(output_pic_file_name)
@@ -361,6 +377,8 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
 
 
 def remove_black_bar(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
+    ''' Remove black bar from picture '''
+    _disallow_multi_dot(original_pic)
     # output file final path
     output_pic_file_name = Path(output_stem).with_suffix('.jpg')
     output_pic_path = output_folder.joinpath(output_pic_file_name)
@@ -397,6 +415,7 @@ def strip_exif(original_pic: Path, output_stem: str, output_folder: Path, config
         output_folder (Path): output folder
         config (dict): {'tags': [str]}
     '''
+    _disallow_multi_dot(original_pic)
     # output file final path
     output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
     output_pic_path = output_folder.joinpath(output_pic_file_name)
@@ -495,6 +514,7 @@ def _set_exif_tags_2(src: Path, dst: Path, config: dict):
 
 def set_exif(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
     ''' config: {'exif_key': 'value' } '''
+    _disallow_multi_dot(original_pic)
     output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
