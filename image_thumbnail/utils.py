@@ -360,6 +360,19 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
     quality = config.get('quality', ImageQuality.JPEG_GOOD) # 95% quality can save 1/2 space
     tags = config.get('tags', [])
 
+    skip_under_mb = config.get('skip_under_mb', 0)
+    
+    shall_skip_flag = False
+    if skip_under_mb == 0:
+        shall_skip_flag = True
+    else:
+        if original_pic.stat().st_size < skip_under_mb * 1024 * 1024:
+            shall_skip_flag = True
+    
+    if shall_skip_flag:
+        just_copy_file(original_pic, output_pic_path)
+        return
+
     try:
         im = PILImage.open(original_pic)
         if im.mode not in ("L", "RGB"):

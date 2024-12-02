@@ -46,7 +46,8 @@ def down_size(src, dst, size, quality, force, tag):
 @click.option('-d', '--dimension', type=int, required=False, default=0, prompt="Max dimension (eg. width, height), if 0 then size unchanged", help='Max dimension (eg. width, height), if 0 then size unchanged')
 @click.option('-q', '--quality', type=int, required=False, default=constants.ImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
 @click.option('-t', '--tag', type=str, required=False, default=[], multiple=True, prompt="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.", help="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.")
-def down_scale(src, dst, dimension, quality, tag):
+@click.option('-s', '--skipunder', type=float, required=False, default=0, prompt="Skip images under this ?MB, if 0 then no skip", help='Skip images under this ?MB, if 0 then no skip')
+def down_scale(src, dst, dimension, quality, tag, skipunder):
     '''
         Shrink images till a max dimension in pixels (width, height).
 
@@ -56,7 +57,8 @@ def down_scale(src, dst, dimension, quality, tag):
     config = {
         'max_dimension': int(dimension),
         'quality': quality,
-        'tags': [x.lower() for x in tag]
+        'tags': [x.lower() for x in tag],
+        'skip_under_mb': float(skipunder)
     }
     for message in utils.scan_multi(
         Path(src),
