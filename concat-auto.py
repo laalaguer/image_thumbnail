@@ -13,7 +13,7 @@ def process_files_in_folder(folder_path, direction:bool, remove_after:bool):
     '''
     files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
     full_paths = [os.path.join(folder_path, f) for f in files]
-    imgs = [file for file in full_paths if utils.is_img(file)]
+    imgs = [file for file in full_paths if (not utils.is_hidden_file(file)) and utils.is_img(file)]
 
     if len(imgs) < 2:
         return

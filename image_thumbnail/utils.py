@@ -23,6 +23,11 @@ from .constants import (
     IMAGE_SUFFIX
 )
 
+def is_hidden_file(file_path: Union[str, Path]):
+    ''' If is hidden file '''
+    file_path = Path(file_path)
+    return file_path.name.startswith('.')
+
 def is_img(file_path: str):
     ''' If is supported image '''
     supported = IMAGE_SUFFIX
