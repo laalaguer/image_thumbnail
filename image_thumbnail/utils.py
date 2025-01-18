@@ -40,6 +40,12 @@ def is_img(file_path: str):
 # Load partial images without error
 PILImageFile.LOAD_TRUNCATED_IMAGES = True
 
+def if_exists_then_raise(path: Union[str, Path]):
+    ''' If path exists then raise exception '''
+    path = Path(path)
+    if path.exists():
+        raise Exception(f'File exists: {path}')
+
 def silent_remove(path: Union[str, Path]):
     ''' Silently remove a file on the os '''
     path = Path(path)
@@ -299,6 +305,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
             # Output file final path
             output_pic_file_name = Path(output_stem + original_pic.suffix)
             output_pic_path = output_folder.joinpath(output_pic_file_name)
+            if_exists_then_raise(output_pic_path)
             just_copy_file(original_pic, output_pic_path)
         else:
             # Output file final path
@@ -339,6 +346,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
                 if len(buffer.getvalue()) > max_size_mb * 1024 * 1024:
                     continue
                 else:
+                    if_exists_then_raise(output_pic_path)
                     im_copy.save(output_pic_path, "JPEG", quality=quality, exif=my_exif)
                     print("save:", output_pic_path)
                     break
@@ -390,6 +398,7 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
         my_exif = im.getexif()
         my_exif = _strip_exif_tags(my_exif, tags)
 
+        if_exists_then_raise(output_pic_path)
         im.save(output_pic_path, "JPEG", quality=quality, exif=my_exif)
         print("save:", output_pic_path)
     except Exception as e:
@@ -420,6 +429,7 @@ def remove_black_bar(original_pic: Path, output_stem: str, output_folder: Path, 
         cropped_image = im.crop(bbox)
 
         # Save the cropped image
+        if_exists_then_raise(output_pic_path)
         cropped_image.save(output_pic_path, "JPEG", quality=quality)
         print("save:", output_pic_path)
     except Exception as e:
@@ -443,6 +453,7 @@ def strip_exif(original_pic: Path, output_stem: str, output_folder: Path, config
     tags = config.get('tags', [])
 
     try:
+        if_exists_then_raise(output_pic_path)
         _strip_exif_tags_2(original_pic, output_pic_path, tags)
     except Exception as e:
         print(e)
@@ -539,6 +550,7 @@ def set_exif(original_pic: Path, output_stem: str, output_folder: Path, config:d
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
     try:
+        if_exists_then_raise(output_pic_path)
         _set_exif_tags_2(original_pic, output_pic_path, config)
     except Exception as e:
         print(f'set_exif error: {original_pic}')
