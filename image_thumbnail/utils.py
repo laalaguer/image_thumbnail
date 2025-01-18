@@ -267,7 +267,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
         ----------
         config: {'max_size_mb':float, 'quality':int, 'force_jpg':bool, 'tags':List[str]}
     '''
-    _disallow_multi_dot(original_pic)
+    # _disallow_multi_dot(original_pic)
 
     # Set up configurations, if not configured then use "middle" range options
     quality = config.get('quality', ImageQuality.JPEG_GOOD)
@@ -297,12 +297,12 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
         
         if not flag_should_transform:
             # Output file final path
-            output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
+            output_pic_file_name = Path(output_stem + original_pic.suffix)
             output_pic_path = output_folder.joinpath(output_pic_file_name)
             just_copy_file(original_pic, output_pic_path)
         else:
             # Output file final path
-            output_pic_file_name = Path(output_stem).with_suffix('.jpg')
+            output_pic_file_name = Path(output_stem + '.jpg')
             output_pic_path = output_folder.joinpath(output_pic_file_name)
 
             longer_side = max([im.width, im.height])
@@ -355,9 +355,9 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
         ----------
         config: {'max_dimension':int, 'quality':int, 'tags':List[str]}
     '''
-    _disallow_multi_dot(original_pic)
+    # _disallow_multi_dot(original_pic)
     # output file final path
-    output_pic_file_name = Path(output_stem).with_suffix('.jpg')
+    output_pic_file_name = Path(output_stem+'.jpg')
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
     # Set up configurations, if not configured then use "middle" range options
@@ -398,9 +398,9 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
 
 def remove_black_bar(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
     ''' Remove black bar from picture '''
-    _disallow_multi_dot(original_pic)
+    # _disallow_multi_dot(original_pic)
     # output file final path
-    output_pic_file_name = Path(output_stem).with_suffix('.jpg')
+    output_pic_file_name = Path(output_stem + '.jpg')
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
     # Set up configurations, if not configured then use "middle" range options
@@ -435,9 +435,9 @@ def strip_exif(original_pic: Path, output_stem: str, output_folder: Path, config
         output_folder (Path): output folder
         config (dict): {'tags': [str]}
     '''
-    _disallow_multi_dot(original_pic)
+    # _disallow_multi_dot(original_pic)
     # output file final path
-    output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
+    output_pic_file_name = Path(output_stem + original_pic.suffix)
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
     tags = config.get('tags', [])
@@ -534,8 +534,8 @@ def _set_exif_tags_2(src: Path, dst: Path, config: dict):
 
 def set_exif(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
     ''' config: {'exif_key': 'value' } '''
-    _disallow_multi_dot(original_pic)
-    output_pic_file_name = Path(output_stem).with_suffix(original_pic.suffix)
+    # _disallow_multi_dot(original_pic)
+    output_pic_file_name = Path(output_stem + original_pic.suffix)
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
     try:
