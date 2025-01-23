@@ -383,6 +383,9 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
             shall_skip_flag = True
     
     if shall_skip_flag:
+        # remain the original file suffix if the file is to be copied.
+        output_pic_file_name = Path(output_stem + original_pic.suffix)
+        output_pic_path = output_folder.joinpath(output_pic_file_name)
         just_copy_file(original_pic, output_pic_path)
         return
 
