@@ -19,7 +19,7 @@ from exif import (
 
 from .constants import (
     StorageSizes,
-    ImageQuality,
+    JpegImageQuality,
     IMAGE_SUFFIX
 )
 
@@ -276,7 +276,7 @@ def down_size(original_pic: Path, output_stem: str, output_folder: Path, config:
     # _disallow_multi_dot(original_pic)
 
     # Set up configurations, if not configured then use "middle" range options
-    quality = config.get('quality', ImageQuality.JPEG_GOOD)
+    quality = config.get('quality', JpegImageQuality.JPEG_GOOD)
     max_size_mb = config.get('max_size_mb', StorageSizes.JPEG_GOOD)
     force_jpg = config.get('force_jpg', False)
     tags = config.get('tags', [])
@@ -370,7 +370,7 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
 
     # Set up configurations, if not configured then use "middle" range options
     max_dimension = config.get('max_dimension', 0)
-    quality = config.get('quality', ImageQuality.JPEG_GOOD) # 95% quality can save 1/2 space
+    quality = config.get('quality', JpegImageQuality.JPEG_GOOD) # 95% quality can save 1/2 space
     tags = config.get('tags', [])
 
     skip_under_mb = config.get('skip_under_mb', 0)
@@ -416,7 +416,7 @@ def remove_black_bar(original_pic: Path, output_stem: str, output_folder: Path, 
     output_pic_path = output_folder.joinpath(output_pic_file_name)
 
     # Set up configurations, if not configured then use "middle" range options
-    quality = ImageQuality.JPEG_GOOD # 95% quality can save 1/2 space
+    quality = JpegImageQuality.JPEG_GOOD # 95% quality can save 1/2 space
 
     try:
         im = open_img(original_pic)

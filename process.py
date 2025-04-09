@@ -14,7 +14,7 @@ def cli():
 @click.argument('src', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True), required=True)
 @click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
 @click.option('-s', '--size', type=float, required=False, default=constants.StorageSizes.JPEG_GOOD, prompt="Process files till less than () MB?", help='Process files till less than () MB?')
-@click.option('-q', '--quality', type=int, required=False, default=constants.ImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
+@click.option('-q', '--quality', type=int, required=False, default=constants.JpegImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
 @click.option('-f', '--force', is_flag=True, show_default=True, default=False, help="Enfore every image converted to JPG")
 @click.option('-t', '--tag', type=str, required=False, default=[], multiple=True, prompt="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.", help="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.")
 def down_size(src, dst, size, quality, force, tag):
@@ -44,7 +44,7 @@ def down_size(src, dst, size, quality, force, tag):
 @click.argument('src', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True), required=True)
 @click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
 @click.option('-d', '--dimension', type=int, required=False, default=0, prompt="Max dimension (eg. width, height), if 0 then size unchanged", help='Max dimension (eg. width, height), if 0 then size unchanged')
-@click.option('-q', '--quality', type=int, required=False, default=constants.ImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
+@click.option('-q', '--quality', type=int, required=False, default=constants.JpegImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
 @click.option('-t', '--tag', type=str, required=False, default=[], multiple=True, prompt="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.", help="EXIF tag to be removed, eg. image_description, exposure_mode. Can use -t multiple times.")
 @click.option('-s', '--skipunder', type=float, required=False, default=0, prompt="Skip images under this ?MB, if 0 then no skip", help='Skip images under this ?MB, if 0 then no skip')
 def down_scale(src, dst, dimension, quality, tag, skipunder):

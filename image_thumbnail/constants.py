@@ -45,7 +45,7 @@ class StorageSizes:
     JPEG_LIGHT     = 0.5
 
 
-class ImageQuality:
+class JpegImageQuality:
     # int
     JPEG_LOSSLESS   = 100
     JPEG_BEST       = 95
@@ -55,6 +55,7 @@ class ImageQuality:
 
 
 IMAGE_SUFFIX = [
+    '.jxl', # jpegxl
     '.jpeg',
     '.jpg',
     '.png',
