@@ -154,11 +154,38 @@ def set_exif(src, dst, tag):
     print()
 
 
+@click.command()
+@click.argument('src', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True), required=True)
+@click.argument('dst', type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, writable=True, resolve_path=True), required=True)
+@click.option('-w', '--width', type=int, required=True, default=0, prompt="Width aspect ratio of image (eg, the 3 in 3x2)", help='Width aspect ratio of image (eg, the 3 in 3x2)')
+@click.option('-t', '--height', type=int, required=True, default=0, prompt="Height aspect ratio of image (eg, the 2 in 3x2)", help='Height aspect ratio of image (eg, the 3 in 3x2)')
+@click.option('-q', '--quality', type=int, required=False, default=constants.JpegImageQuality.JPEG_GOOD, prompt="[1-100] JPEG image quality (bigger is better)", help='[1-100] JPEG image quality (bigger is better)')
+def distort_images(src, dst, width, height, quality):
+    '''
+        All images will be distorted to a specified dimensions (width x height).
+    '''
+    click.echo(f'src: {src}, dst: {dst}, width x height: {width}x{height} ratio, quality: {quality}')
+    config = {
+        'width_aspect_ratio': int(width),
+        'height_aspect_ratio': int(height),
+        'quality': quality,
+    }
+    for message in utils.scan_multi(
+        Path(src),
+        Path(dst),
+        constants.IMAGE_SUFFIX,
+        'distort_images',
+        config
+    ):
+        print(f'\r{message}', end='')
+    print()
+
 cli.add_command(down_size)
 cli.add_command(down_scale)
 cli.add_command(remove_black_bar)
 cli.add_command(strip_exif)
 cli.add_command(set_exif)
+cli.add_command(distort_images)
 
 if __name__ == '__main__':
     cli()

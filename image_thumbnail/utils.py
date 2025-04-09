@@ -188,6 +188,36 @@ def concat_imgs(imgs: List[PILImage.Image], horizontal:bool) -> PILImage.Image:
     return concatenated_image
 
 
+def distort(image, width_aspect_ratio: int, height_aspect_ratio: int):
+    ''' 
+    Distort the aspect ratio of an image.
+
+    If input is a 100x100 image and width_ratio=2, height_ratio=1,
+    then the output is of ratio 2:1. So the output is 100x50
+
+    This operation is not expanding: the output width is not longer than input width,
+    the output height is no longer than input height.
+    
+    Parameters:
+        image (PIL.Image): The image to be distorted.
+        width_aspect_ratio (int): The ratio to distort the width.
+        height_aspect_ratio (int): The ratio to distort the height.
+
+    Returns:
+        PIL.Image: The distorted image.
+    '''
+    # Get the original dimensions of the image
+    original_width, original_height = image.size
+
+    # Suppose width is not changed.
+    new_height = int((original_width / width_aspect_ratio) * height_aspect_ratio)
+
+    # Resize the image to the new dimensions
+    distorted_image = image.resize((original_width, new_height), PILImage.Resampling.LANCZOS)
+
+    return distorted_image
+
+
 def max_process_count(MIN:int=2):
     ''' Compute max processes allowed on this computer '''
     try:
@@ -408,6 +438,33 @@ def down_scale(original_pic: Path, output_stem: str, output_folder: Path, config
         print(e)
 
 
+def distort_images(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
+    output_pic_file_name = Path(output_stem + '.jpg')
+    output_pic_path = output_folder.joinpath(output_pic_file_name)
+    
+    quality = config.get('quality', JpegImageQuality.JPEG_GOOD)
+    width_aspect_ratio = config.get('width_aspect_ratio', -1)
+    height_aspect_ratio = config.get('height_aspect_ratio', -1)
+
+    if width_aspect_ratio <= 0 or height_aspect_ratio <= 0:
+        raise Exception(f'Width {width_aspect_ratio} and height {height_aspect_ratio} aspect ratio must be positive')
+    
+    try:
+        im = PILImage.open(original_pic)
+        if im.mode not in ("L", "RGB"):
+            im = im.convert("RGB")
+
+        # Distort the image
+        im = distort(im, width_aspect_ratio, height_aspect_ratio)
+
+        # Save the distorted image
+        if_exists_then_raise(output_pic_path)
+        im.save(output_pic_path, "JPEG", quality=quality)
+        print("save:", output_pic_path)
+    except Exception as e:
+        print(e)
+
+
 def remove_black_bar(original_pic: Path, output_stem: str, output_folder: Path, config:dict):
     ''' Remove black bar from picture '''
     # _disallow_multi_dot(original_pic)
@@ -567,7 +624,8 @@ class ImageHelper:
         'down_scale': down_scale,
         'remove_black_bar': remove_black_bar,
         'strip_exif': strip_exif,
-        'set_exif': set_exif
+        'set_exif': set_exif,
+        'distort_images': distort_images
     }
 
     @classmethod
