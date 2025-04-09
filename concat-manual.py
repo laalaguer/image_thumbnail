@@ -26,8 +26,13 @@ if __name__ == "__main__":
     images = get_user_inputs('Enter image file full path, press Enter to stop: ')
     imgs = [utils.open_img(x) for x in images]
 
+    if len(imgs) < 2:
+        exit()
+    
+    width_aspect_ratio = int(input('Width aspect ratio (default 3): ') or 3)
+    height_aspect_ratio = int(input('Height aspect ratio (default 2): ') or 2)
 
-    big_img = utils.concat_imgs(imgs, direction)
+    big_img = utils.concat_imgs_2(imgs, direction, width_aspect_ratio, height_aspect_ratio)
 
     big_img_path = images[0] + '.jpg'
 

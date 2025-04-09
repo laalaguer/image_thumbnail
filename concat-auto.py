@@ -5,7 +5,7 @@
 import os
 from image_thumbnail import utils
 
-def process_files_in_folder(folder_path, direction:bool, remove_after:bool):
+def process_files_in_folder(folder_path, direction:bool, remove_after:bool, width_aspect_ratio: int, height_aspect_ratio: int):
     ''' Concat ALL images under one folder.
 
         direction: True=horizontal, False=vertical
@@ -20,7 +20,7 @@ def process_files_in_folder(folder_path, direction:bool, remove_after:bool):
 
     imgs = sorted(imgs) # sort path strings by name
     PIL_imgs = [utils.open_img(img) for img in imgs] # Convert to img objects
-    big_img = utils.concat_imgs(PIL_imgs, direction) # Concat into one
+    big_img = utils.concat_imgs_2(PIL_imgs, direction, width_aspect_ratio, height_aspect_ratio) # Concat into one
     big_img_path = imgs[0] + '.jpg'
     utils.save_jpg(big_img, big_img_path) # Save
 
@@ -29,7 +29,7 @@ def process_files_in_folder(folder_path, direction:bool, remove_after:bool):
             utils.silent_remove(img)
             
 
-def recursive(folder_path, direction:bool, remove_after):
+def recursive(folder_path, direction:bool, remove_after, width_aspect_ratio: int, height_aspect_ratio: int):
     ''' Recursively do the operation '''
     # If sub-folder is found, do the sub folder
     for subfolder in os.listdir(folder_path):
@@ -37,7 +37,7 @@ def recursive(folder_path, direction:bool, remove_after):
         if os.path.isdir(subfolder_path):
             recursive(subfolder_path, direction, remove_after)
     # Do the grouping
-    process_files_in_folder(folder_path, direction, remove_after)
+    process_files_in_folder(folder_path, direction, remove_after, width_aspect_ratio, height_aspect_ratio)
 
 
 if __name__ == "__main__":
@@ -63,7 +63,10 @@ if __name__ == "__main__":
     else:
         remove = True
 
+    width_aspect_ratio = int(input('Width aspect ratio (default 3): ') or 3)
+    height_aspect_ratio = int(input('Height aspect ratio (default 2): ') or 2)
+
     if r:
-        recursive(folder, direction, remove)
+        recursive(folder, direction, remove, width_aspect_ratio, height_aspect_ratio)
     else:
         process_files_in_folder(folder, direction, remove)

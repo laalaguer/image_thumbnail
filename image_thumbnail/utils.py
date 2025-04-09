@@ -103,9 +103,66 @@ def open_img(pic_path:str):
 
     return im
 
-      
-def resize_to_fit(img: PILImage.Image, x, y):
-    ''' Size down the img to width x and height y
+
+def resize_to_height(image: PILImage, required_height: int) -> PILImage:
+    """
+    Resize the given image to the specified height while maintaining the aspect ratio.
+
+    Args:
+        image (Image.Image): The input image object.
+        required_height (int): The desired height of the resized image.
+
+    Returns:
+        Image.Image: The resized image.
+    """
+    # Get the original dimensions of the image
+    original_width, original_height = image.size
+
+    # Calculate the new width to maintain the aspect ratio
+    aspect_ratio = original_width / original_height
+    new_width = int(required_height * aspect_ratio)
+
+    # Resize the image
+    resized_image = image.resize((new_width, required_height), PILImage.Resampling.LANCZOS)
+
+    return resized_image
+
+
+def crop_center(image: PIL.Image, a: int, b: int) -> PIL.Image:
+    """
+    Crop the most centered box of dimensions (a, b) from the given image.
+
+    Args:
+        image (Image.Image): The input image.
+        a (int): The width of the box to crop.
+        b (int): The height of the box to crop.
+
+    Returns:
+        Image.Image: The cropped image.
+    """
+    # Get the dimensions of the original image
+    x, y = image.size
+
+    # Ensure the box dimensions are smaller than the image dimensions
+    if a > x or b > y:
+        raise ValueError("Box dimensions (a, b) must be equal or smaller than image dimensions (x, y).")
+
+    # Calculate the coordinates of the top-left corner of the box
+    left = (x - a) // 2
+    top = (y - b) // 2
+
+    # Calculate the coordinates of the bottom-right corner of the box
+    right = left + a
+    bottom = top + b
+
+    # Crop the image
+    cropped_image = image.crop((left, top, right, bottom))
+
+    return cropped_image
+
+
+def resize_to_fit(img: PILImage.Image, x:int, y:int):
+    ''' Resize the img to width x and height y
         Return type Image
     '''
     # Open the original image
@@ -152,16 +209,17 @@ def min_size(imgs: List[PILImage.Image]) -> Tuple[int, int]:
 
     return (min_width, min_height)
 
-
 def concat_imgs(imgs: List[PILImage.Image], horizontal:bool) -> PILImage.Image:
-    ''' Concat images into a horizontal or vertical way
+    ''' Concat images in horizontal or vertical way.
+
+        Each image will be resized and cropped to same aspect ratio of (width x height). Then concate them together.
 
     Args:
         imgs (list): a list of image files
         horizontal (bool): true then make it horizontal, false then vertical
 
     Returns:
-        PIL.Image.Image
+        PIL.Image.Image: The concatenated image.
     '''
     min_width, min_height = min_size(imgs)
     new_imgs = [resize_to_fit(x, min_width, min_height) for x in imgs]
@@ -184,6 +242,80 @@ def concat_imgs(imgs: List[PILImage.Image], horizontal:bool) -> PILImage.Image:
         for image in new_imgs:
             concatenated_image.paste(image, (0, current_y))
             current_y += min_height
+    
+    return concatenated_image
+
+
+def concat_imgs_2(imgs: List[PILImage.Image], horizontal:bool, width_aspect_ratio: int, height_aspect_ratio: int) -> PILImage.Image:
+    ''' Concat images in horizontal or vertical way.
+
+        Each image will be resized and cropped (thumbnail) to same aspect ratio of (width x height). Then concate them together.
+
+    Args:
+        imgs (list): a list of image files
+        horizontal (bool): true then make it horizontal, false then vertical
+        with_aspect_ratio (int): the width aspect ratio of each image (will crop the original of each image to this ratio)
+        height_aspect_ratio (int): the height aspect ratio of each image (will crop the original of each image to this ratio)
+
+    Returns:
+        PIL.Image.Image: The concatenated image.
+    '''
+    # Find out the min height of all input images
+    _, _min_height = min_size(imgs)
+
+    # Shrink each image to the same height while keeping the aspect ratio of each image.
+    shrinked_imgs = []
+    for item in imgs:
+        _item = resize_to_height(item, _min_height)
+        shrinked_imgs.append(_item)
+        print(f'shrinked width: {_item.size[0]}, shrinked height: {_item.size[1]}')
+
+    # Duplicate imgs to a copy list to prevent accidentally modify the original imgs
+    img_copies = [x.copy() for x in shrinked_imgs]
+
+    # Detect the smallest width and height of all input images
+    min_width, min_height = min_size(img_copies)
+    print(f'min_width: {min_width}, min_height: {min_height}')
+
+    each_width = min_width
+    each_height = int((min_width / width_aspect_ratio) * height_aspect_ratio)
+
+    if each_height > min_height:
+        # then hell the width is too long.
+        # We start from the height to decide the width
+        each_height = min_height
+        each_width = int((min_height / height_aspect_ratio) * width_aspect_ratio)
+    
+    print(f'each_width: {each_width}, each_height: {each_height}')
+
+    cropped_imgs = []
+    for item in img_copies:
+        _item = crop_center(item, each_width, each_height)
+        cropped_imgs.append(_item)
+        print(f'item width: {_item.size[0]}, item height: {_item.size[1]}')
+
+    # for each in cropped_imgs:
+    #     each.show()
+
+    # paste the content to the final big image
+    if horizontal:
+        total_width = each_width * len(cropped_imgs)
+        # Create a new canvas
+        concatenated_image = PILImage.new('RGB', (total_width, each_height))
+        # Paste images one by one
+        current_x = 0
+        for image in cropped_imgs:
+            concatenated_image.paste(image, (current_x, 0))
+            current_x += each_width
+    else:
+        total_height = each_height * len(cropped_imgs)
+        # Create a new canvas
+        concatenated_image = PILImage.new('RGB', (each_width, total_height))
+        # Paste images one by one
+        current_y = 0
+        for image in cropped_imgs:
+            concatenated_image.paste(image, (0, current_y))
+            current_y += each_height
     
     return concatenated_image
 
