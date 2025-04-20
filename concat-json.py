@@ -66,46 +66,51 @@ def main():
 
 
     for video_path, image_paths in json_data.items():
-        # Open images
-        imgs = [utils.open_img(img_path) for img_path in image_paths]
+        try:
+            # Open images
+            imgs = [utils.open_img(img_path) for img_path in image_paths]
 
-        if len(imgs) < 2:
-            print(f"Skipping {video_path}: At least two images are required for concatenation.")
+            if len(imgs) < 2:
+                print(f"Skipping {video_path}: At least two images are required for concatenation.")
+                continue
+            
+            # Find the image width and height
+            # decide if the image is vertical or horizontal
+            # and if the --only-vertical flag is set
+            _width = imgs[0].size[0]
+            _height = imgs[0].size[1]
+            if _width > _height and args.only_vertical:
+                print(f"Skipping concat imgs of {video_path}: Image is wider than taller and --only-vertical is set.")
+                continue
+
+            # Concatenate images
+            big_img = utils.concat_imgs_2(
+                imgs,
+                direction,
+                width_aspect_ratio=args.width_aspect_ratio,
+                height_aspect_ratio=args.height_aspect_ratio
+            )
+
+            # Determine output path
+            output_stem = os.path.splitext(os.path.basename(video_path))[0]
+            output_path = os.path.join(os.path.dirname(video_path), f"{output_stem}.jpg")
+        
+            # Check if --skip-exist is set and the output file already exists
+            if args.skip_exist and os.path.exists(output_path):
+                print(f"Skipping {video_path}: Output file {output_path} already exists.")
+                continue
+            
+            # Remove existing cover.jpg if it exists
+            if os.path.exists(output_path):
+                os.remove(output_path)
+
+            # Save the concatenated image
+            utils.save_jpg(big_img, output_path)
+            print(f"Concatenated image saved to {output_path}")
+        except Exception as e:
+            print(f"Error processing {video_path}: {e}")
             continue
         
-        # Find the image width and height
-        # decide if the image is vertical or horizontal
-        # and if the --only-vertical flag is set
-        _width = imgs[0].size[0]
-        _height = imgs[0].size[1]
-        if _width > _height and args.only_vertical:
-            print(f"Skipping concat imgs of {video_path}: Image is wider than taller and --only-vertical is set.")
-            continue
-
-        # Concatenate images
-        big_img = utils.concat_imgs_2(
-            imgs,
-            direction,
-            width_aspect_ratio=args.width_aspect_ratio,
-            height_aspect_ratio=args.height_aspect_ratio
-        )
-
-        # Determine output path
-        output_stem = os.path.splitext(os.path.basename(video_path))[0]
-        output_path = os.path.join(os.path.dirname(video_path), f"{output_stem}.jpg")
-    
-        # Check if --skip-exist is set and the output file already exists
-        if args.skip_exist and os.path.exists(output_path):
-            print(f"Skipping {video_path}: Output file {output_path} already exists.")
-            continue
-        
-        # Remove existing cover.jpg if it exists
-        if os.path.exists(output_path):
-            os.remove(output_path)
-
-        # Save the concatenated image
-        utils.save_jpg(big_img, output_path)
-        print(f"Concatenated image saved to {output_path}")
 
 if __name__ == "__main__":
     main()
